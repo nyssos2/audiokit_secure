@@ -115,11 +115,18 @@ if st.session_state.script_final:
     st.session_state.script_final = script_edite
 
     # ÉTAPE 3 : AUDIO
-    if st.button("🔊 Créer l'Audio final"):
+    if st.button("🔊 2. Créer l'Audio final"):
         try:
             with st.status("Synthèse vocale en cours..."):
-                horodatage = datetime.datetime.now().strftime("%Y%m%d_%H%M")
-                nom_mp3 = f"guide_{sujet.replace(' ', '_')}_{horodatage}.mp3"
+                # 1. On nettoie le nom du sujet (enlève les espaces et caractères spéciaux)
+                sujet_propre = "".join(x for x in sujet if x.isalnum() or x in "._- ").replace(" ", "_")
+                
+                # 2. On compte combien de fichiers existent déjà pour ce sujet
+                fichiers_existants = [f for f in os.listdir(".") if f.startswith(f"guide_{sujet_propre}")]
+                index = len(fichiers_existants) + 1
+                
+                # 3. On crée le nom propre : guide_Sujet_general_index.mp3
+                nom_mp3 = f"guide_{sujet_propre}_general_{index}.mp3"
     
     # Ajoute une petite pause de silence au début du script pour laisser le temps à l'utilisateur de mettre ses écouteurs
                 texte_avec_pause = " . . . " + st.session_state.script_final
@@ -172,6 +179,7 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
 
 
 
