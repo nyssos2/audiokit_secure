@@ -38,27 +38,16 @@ if not check_password():
 # --- 2. CONFIGURATION API ---
 genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
 
-# Diagnostic : On récupère la liste réelle des modèles autorisés pour ta clé
-try:
-    models = genai.list_models()
-    model_list = [m.name for m in models if 'generateContent' in m.supported_generation_methods]
-    st.sidebar.write("### Modèles détectés :")
-    for m in model_list:
-        st.sidebar.code(m) # Affiche le nom exact à copier
-    
-    # On essaie d'en prendre un dans la liste automatiquement
-    target_model = model_list[0] if model_list else "gemini-pro"
-except Exception as e:
-    st.sidebar.error(f"Erreur de liste : {e}")
-    target_model = "gemini-pro"
+# On choisit le modèle le plus performant de ta liste
+# gemini-2.5-flash est parfait pour la rédaction rapide
+ID_MODEL = "models/gemini-2.5-flash"
 
-model = GenerativeModel(model_name=target_model)
-
+model = GenerativeModel(model_name=ID_MODEL)
 
 # --- TITRE ET SOUS-TITRE ---
-st.title("🎙️ Mon Guide Voyage Perso")
-st.markdown("##### Crée tes audio-guides immersifs et captivants !") # Le ##### rend le texte plus élégant
-st.markdown(f"**Modèle utilisé :** `{target_model}`")
+st.title("🎙️ Ma fabrique à audio-guides perso")
+st.markdown("##### Crée tes audio-guides immersifs et captivants !")
+st.info(f"Modèle propulsé par : Gemini 2.5 Flash")
 
 # --- INTERFACE ---
 with st.sidebar:
@@ -159,6 +148,7 @@ for f in fichiers:
         with open(f, "rb") as file:
 
             st.download_button("📥", data=file, file_name=f, key=f)
+
 
 
 
