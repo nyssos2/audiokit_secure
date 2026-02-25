@@ -6,13 +6,14 @@ import edge_tts
 # (suppression de 'from gtts import gTTS')
 import os
 import datetime
+from pydub import AudioSegment
 
 # --- SÉCURITÉ : MOT DE PASSE ---
 def check_password():
     """Retourne True si l'utilisateur a saisi le bon mot de passe."""
     def password_entered():
         # --- MODIFIE LE MOT DE PASSE ICI ---
-        if st.session_state["password"] == st.secrets["APP_PASSWORD"]: 
+        if st.session_state["password"] == st.secrets["APP_PASSWORD"]:
             st.session_state["password_correct"] = True
             del st.session_state["password"]  # On ne garde pas le mot de passe en mémoire
         else:
@@ -63,9 +64,8 @@ with st.sidebar:
     )
     vitesse = st.select_slider(
         "Vitesse de visite", 
-        options=["Lente", "Normale", "Rapide"]
+        options=["Normale", "Rapide"]
     )
-# NOUVEAU : Sélection de la personnalité
     personnalite = st.selectbox(
         "Style du guide", 
         ["Guide-conférencier (classique)", 
@@ -74,7 +74,40 @@ with st.sidebar:
          "Local (anecdotes et secrets)"]
     )
     genre_voix = st.radio("Voix du guide", ["Féminine", "Masculine"])
+    
+    st.divider()
+    st.subheader("🎵 Ambiance Sonore")
+    musique_fond = st.checkbox("Ajouter une ambiance sonore", value=False)
 
+    if musique_fond:
+        categories_traduction = {
+            "Nature": "Nature",
+            "Urbain": "Urbain",
+            "Intérieur": "Interieur"
+        }
+        
+        nom_affiche = st.selectbox("Catégorie", list(categories_traduction.keys()))
+        nom_dossier = categories_traduction[nom_affiche]
+        chemin_dossier = os.path.join("sounds_library", nom_dossier)
+        
+        try:
+            sons_disponibles = [f for f in os.listdir(chemin_dossier) if f.endswith(('.mp3', '.wav'))]
+            
+            if sons_disponibles:
+                son_choisi = st.selectbox("Choisir un son", sons_disponibles)
+                # ON ENREGISTRE DANS LE POST-IT (Session State)
+                st.session_state.chemin_son_complet = os.path.join(chemin_dossier, son_choisi)
+                st.audio(st.session_state.chemin_son_complet)
+            else:
+                st.warning(f"Le dossier {nom_affiche} est vide.")
+                st.session_state.chemin_son_complet = None
+        except FileNotFoundError:
+            st.error(f"Dossier introuvable : {chemin_dossier}")
+            st.session_state.chemin_son_complet = None
+    else:
+        st.session_state.chemin_son_complet = None
+
+# On sort de la sidebar pour le champ principal
 sujet = st.text_input("Quel monument ou lieu voulez-vous visiter ?")
 
 # --- 4. GÉNÉRATION ---
@@ -92,6 +125,11 @@ if st.button("✍️ Rédiger le script"):
             Sujet : {sujet}. Public : {public}. 
             DURÉE CIBLE : {duree} minutes.
             
+            STRUCTURE DU SCRIPT (OBLIGATOIRE) :
+            1. INTRODUCTION HISTORIQUE RICHE : Commence par recontextualiser le lieu. Explique ce qu'il s'y passait à l'époque de sa création (ex: 11e siècle pour Angkor) et fais un parallèle avec ce qu'il se passait ailleurs dans le monde à la même époque pour donner des points de repère (ex: "Pendant qu'ici on bâtissait ceci, en Europe on achevait les premières cathédrales...").
+            2. VISITE SPATIALE : si possible et si tu trouves les informations fiables et vérifiées nécessaires, guide l'auditeur physiquement dans l'espace. Utilise des indications directionnelles ("Si vous regardez à votre droite", "En passant sous le portique", "Cherchez du regard tel détail sur le fronton").
+            3. ANECDOTES ET DÉTAILS : Intègre des éléments sur l'architecture, la vie quotidienne ou les secrets du lieu. Ne propose que des informations qui ont été vérifiées.
+
             CONSIGNES DE STYLE :
             - Si 'Le Vieux Sage' : Ton mystérieux, parle de folklore, de spiritualité, commence par 'On raconte que...'.
             - Si 'Indiana Jones' : Ton épique, insiste sur l'aventure, les découvertes, utilise des verbes d'action.
@@ -132,44 +170,49 @@ if st.session_state.script_final:
     st.session_state.script_final = script_edite
 
 # ÉTAPE 3 : AUDIO
+if st.session_state.script_final:
     if st.button("🔊 Créer l'Audio final"):
         try:
-            with st.status("Synthèse vocale haute qualité en cours..."):
-                # 1. Préparation du nom de fichier
+            with st.status("Génération de l'expérience audio..."):
+                # 1. Nom du fichier
                 sujet_propre = "".join(x for x in sujet if x.isalnum() or x in "._- ").replace(" ", "_")
                 fichiers_existants = [f for f in os.listdir(".") if f.startswith(f"guide_{sujet_propre}")]
                 index = len(fichiers_existants) + 1
-                nom_mp3 = f"guide_{sujet_propre}_general_{index}.mp3"
+                nom_mp3 = f"guide_{sujet_propre}_final_{index}.mp3"
 
-                # 2. FONCTION POUR GÉNÉRER LA VOIX (Le nouveau moteur)
+                # 2. GÉNÉRATION DE LA VOIX (Henri ou Denise)
                 async def generate_voice():
-                    # Sélection de la voix
                     voice = "fr-FR-DeniseNeural" if genre_voix == "Féminine" else "fr-FR-HenriNeural"
-                    # Ajout du silence (les points de suspension fonctionnent très bien avec Edge-TTS)
                     texte_complet = " . . . " + st.session_state.script_final
-                    
                     communicate = edge_tts.Communicate(texte_complet, voice)
                     await communicate.save(nom_mp3)
 
-                # 3. LANCEMENT
                 asyncio.run(generate_voice())
-                
-            st.success(f"🎉 Audio prêt !")
+
+               # 3. MIXAGE AVEC L'AMBIANCE
+                if musique_fond and st.session_state.get('chemin_son_complet'):
+                    try:
+                        son_voix = AudioSegment.from_file(nom_mp3)
+                        son_ambiance = AudioSegment.from_file(st.session_state.chemin_son_complet)
+
+                        # Réglage de la discrétion
+                        son_ambiance_calme = son_ambiance - 25 
+                        audio_mixe = son_voix.overlay(son_ambiance_calme, loop=True)
+                        audio_mixe.export(nom_mp3, format="mp3")
+                    except Exception as e_mix:
+                        # Si le mixage foire, on prévient mais on continue avec la voix seule
+                        st.warning(f"Le mixage a échoué, voix seule conservée. Erreur : {e_mix}")
+
+            # On sort du "with st.status"
+            st.success("🎉 Ton audio-guide immersif est prêt !")
             st.audio(nom_mp3)
             
             with open(nom_mp3, "rb") as file:
                 st.download_button("📥 Télécharger le MP3", data=file, file_name=nom_mp3)
 
         except Exception as e:
+            # C'est ici qu'on ferme le tout premier "try" du bouton
             st.error(f"Erreur lors de la création de l'audio : {e}")
-                
-            st.success("🎉 Audio prêt !")
-            st.audio(nom_mp3)
-            
-            with open(nom_mp3, "rb") as file:
-                st.download_button("📥 Télécharger le MP3", data=file, file_name=nom_mp3)
-        except Exception as e:
-            st.error(f"Oups ! Une erreur est survenue : {e}")
 
 # --- HISTORIQUE AVANCÉ ---
 st.divider()
