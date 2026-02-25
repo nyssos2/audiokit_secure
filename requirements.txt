@@ -3,3 +3,4 @@ google-generativeai
 gTTS
 edge-tts
 pydub
+audioop-lts
