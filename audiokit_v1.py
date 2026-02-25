@@ -10,7 +10,7 @@ def check_password():
     """Retourne True si l'utilisateur a saisi le bon mot de passe."""
     def password_entered():
         # --- MODIFIE LE MOT DE PASSE ICI ---
-        if st.session_state["password"] == st.secrets["APP_PASSWORD"]: 
+        if st.session_state["password"] == st.secrets["antifasciste"]: 
             st.session_state["password_correct"] = True
             del st.session_state["password"]  # On ne garde pas le mot de passe en mémoire
         else:
@@ -63,6 +63,14 @@ with st.sidebar:
         "Vitesse de visite", 
         options=["Lente", "Normale", "Rapide"]
     )
+# NOUVEAU : Sélection de la personnalité
+    personnalite = st.selectbox(
+        "Style du guide", 
+        ["Guide-conférencier (classique)", 
+         "Vieux sage (légendes et mystères)", 
+         "Indiana Jones (aventure et action)",
+         "Local (anecdotes et secrets)"]
+    )
 
 sujet = st.text_input("Quel monument ou lieu voulez-vous visiter ?")
 
@@ -74,12 +82,18 @@ if "script_final" not in st.session_state:
 # ÉTAPE 1 : RÉDACTION
 if st.button("✍️ Rédiger le script"):
     try:
-        with st.status("Recherche et rédaction..."):
-            # Prompt optimisé pour la voix
+        with st.status(f"Rédaction en mode {personnalite}..."):
+            # Prompt enrichi
             prompt = f"""
-            TU ES UN GUIDE TOURISTIQUE PROFESSIONNEL.
+            TU ES UN GUIDE TOURISTIQUE DONT LE STYLE EST : {personnalite}.
             Sujet : {sujet}. Public : {public}. 
-	    DURÉE CIBLE : {duree} minutes.
+            DURÉE CIBLE : {duree} minutes.
+            
+            CONSIGNES DE STYLE :
+            - Si 'Le Vieux Sage' : Ton mystérieux, parle de folklore, de spiritualité, commence par 'On raconte que...'.
+            - Si 'Indiana Jones' : Ton épique, insiste sur l'aventure, les découvertes, utilise des verbes d'action.
+            - Si 'Le Local' : Ton amical, parle de 'nous' (les habitants), donne des conseils de resto ou de coins cachés.
+            - Si 'Le Guide Conférencier' : Ton noble, historique, précis et très structuré.
             
             CONSIGNES STRICTES :
             1. Ne fais AUCUNE introduction type 'Voici le script' ou 'Bien sûr'. 
@@ -179,9 +193,3 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
-
-
-
-
-
-
