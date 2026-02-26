@@ -4,3 +4,4 @@ gTTS
 edge-tts
 pydub
 audioop-lts
+eyed3
