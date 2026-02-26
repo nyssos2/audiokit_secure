@@ -14,7 +14,7 @@ st.set_page_config(
 )
 # --- CONFIGURATION DE L'ICÔNE MOBILE (Android/PWA) ---
 # Remplace cette URL par ton URL "Raw" GitHub de l'étape 2
-URL_MON_LOGO = "https://github.com/nyssos2/audiokit_secure/blob/main/logo.png"
+URL_MON_LOGO = "https://github.com/nyssos2/audiokit_secure/main/logo.png"
 
 # Injection de code HTML dans le <head> de la page
 st.markdown(
@@ -25,16 +25,16 @@ st.markdown(
         display: none;
     }}
     </style>
-    <link rel="icon" type="image/png" sizes="192x192" href="{https://github.com/nyssos2/audiokit_secure/blob/main/logo.png}">
-    <link rel="icon" type="image/png" sizes="512x512" href="{https://github.com/nyssos2/audiokit_secure/blob/main/logo.png}">
-    <link rel="apple-touch-icon" href="{https://github.com/nyssos2/audiokit_secure/blob/main/logo.png}">
+    <link rel="icon" type="image/png" sizes="192x192" href="{https://github.com/nyssos2/audiokit_secure/main/logo.png}">
+    <link rel="icon" type="image/png" sizes="512x512" href="{https://github.com/nyssos2/audiokit_secure/main/logo.png}">
+    <link rel="apple-touch-icon" href="{https://github.com/nyssos2/audiokit_secure/main/logo.png}">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#4B0082"> """,
     unsafe_allow_html=True
 )
 # --- CONFIGURATION DE L'ICÔNE MOBILE (Android/PWA) ---
 # Remplace cette URL par ton URL "Raw" GitHub de l'étape 2
-URL_MON_LOGO = "https://raw.githubusercontent.com/nyssos2/audiokit_secure/main/logo.png"
+URL_MON_LOGO = "https://github.com/nyssos2/audiokit_secure/main/logo.png"
 
 # Injection de code HTML dans le <head> de la page
 st.markdown(
@@ -344,6 +344,7 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
 
 
 
