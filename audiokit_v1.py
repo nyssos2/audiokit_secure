@@ -165,7 +165,11 @@ if st.button("✍️ Rédiger le script"):
             1. INTRODUCTION HISTORIQUE RICHE : Commence par recontextualiser le lieu. Explique ce qu'il s'y passait à l'époque de sa création (ex: 11e siècle pour Angkor) et fais un parallèle avec ce qu'il se passait ailleurs dans le monde à la même époque pour donner des points de repère (ex: "Pendant qu'ici on bâtissait ceci, en Europe on achevait les premières cathédrales...").
             2. VISITE SPATIALE : si possible et si tu trouves les informations fiables et vérifiées nécessaires, guide l'auditeur physiquement dans l'espace. Utilise des indications directionnelles ("Si vous regardez à votre droite", "En passant sous le portique", "Cherchez du regard tel détail sur le fronton").
             3. ANECDOTES ET DÉTAILS : Intègre des éléments sur l'architecture, la vie quotidienne ou les secrets du lieu. Ne propose que des informations qui ont été vérifiées.
-
+            4. NOTICES BIOGRAPHIQUES : Si une ou plusieurs personnalités sont déterminantes dans l'histoire du lieu visité, intègre des éléments biographiques les concernant. Exemple : Claunde-Nicolas LEDOUX pour les salines royales d'Arc et Senans.
+            5. ADAPTE LA GRANULARITÉ :
+               - Si la durée demandée est COURTE (5-10 min) : Sois très synthétique, va à l'essentiel, donne les faits marquants.
+               - Si la durée est LONGUE (20-30 min) : Sois exhaustif, raconte des anecdotes détaillées, décris précisément l'architecture et l'histoire, augmente les détails.
+               
             CONSIGNES DE STYLE :
             - Si 'Le Vieux Sage' : Ton mystérieux, parle de folklore, de spiritualité, commence par 'On raconte que...'.
             - Si 'Indiana Jones' : Ton épique, insiste sur l'aventure, les découvertes, utilise des verbes d'action.
@@ -183,9 +187,7 @@ if st.button("✍️ Rédiger le script"):
             8. Respecte STRICTEMENT la durée de {duree} minutes.
             9. Calcule ton volume de texte : environ 140 mots par minute de narration. 
                (Exemple : pour 5 min = 700 mots / pour 20 min = 2800 mots).
-            10. ADAPTE LA GRANULARITÉ :
-               - Si la durée est COURTE (5-10 min) : Sois très synthétique, va à l'essentiel, donne les faits marquants.
-               - Si la durée est LONGUE (20-30 min) : Sois exhaustif, raconte des anecdotes détaillées, décris précisément l'architecture et l'histoire.
+
             """
             response = model.generate_content(prompt)
             # On demande discrètement les coordonnées GPS à Gemini à côté
@@ -336,6 +338,7 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
 
 
 
