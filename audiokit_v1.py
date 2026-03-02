@@ -150,6 +150,7 @@ if st.button("✍️ Rédiger le script"):
             5. ADAPTE LA GRANULARITÉ :
                - Si la durée demandée est COURTE (5-10 min) : Sois très synthétique, va à l'essentiel, donne les faits marquants.
                - Si la durée est LONGUE (20-30 min) : Sois exhaustif, raconte des anecdotes détaillées, décris précisément l'architecture et l'histoire, augmente les détails.
+            6. RESPECTE AU MAXIMUM LA DUREE DEMANDEE (duree).
                
             CONSIGNES DE STYLE :
             - Si 'Le Vieux Sage' : Ton mystérieux, parle de folklore, de spiritualité, commence par 'On raconte que...'.
@@ -318,4 +319,5 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
 
