@@ -11,7 +11,7 @@ import pypdf
 from pydub import AudioSegment
 st.set_page_config(
     page_title="AudioKit",
-    page_icon="https://raw.githubusercontent.com/nyssos2/audiokit_secure/main/logo.png️",  # Tu peux mettre un emoji ou le chemin vers un fichier .png
+    page_icon="🎙️",  # Tu peux mettre un emoji ou le chemin vers un fichier .png
     layout="centered"
 )
 # --- CONFIGURATION DE L'ICÔNE MOBILE ---
@@ -269,6 +269,9 @@ if st.session_state.script_final:
                         import time
                         time.sleep(1.0)  # Petit dodo pour laisser Windows libérer le fichier
                         
+                        son_voix = AudioSegment.from_file(temp_voix).set_frame_rate(44100)
+                        son_ambiance = AudioSegment.from_file(chemin_son_choisi).set_frame_rate(44100)
+                        
                         # On charge la voix fraîchement créée
                         son_voix = AudioSegment.from_file(temp_voix)
                         
@@ -290,7 +293,7 @@ if st.session_state.script_final:
                         audio_mixe = son_voix.overlay(son_ambiance_calme)                        
                         
                         # Exportation finale
-                        audio_mixe.export(nom_mp3, format="mp3")
+                        audio_mixe.export(nom_mp3, format="mp3", bitrate="192k")
                        
                         # Nettoyage du fichier temporaire
                         if os.path.exists(temp_voix):
