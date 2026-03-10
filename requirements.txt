@@ -5,4 +5,4 @@ edge-tts
 pydub
 audioop-lts
 eyed3
-pyPDF2
+pypdf
