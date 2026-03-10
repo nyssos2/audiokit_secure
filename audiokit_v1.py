@@ -7,10 +7,11 @@ import edge_tts
 import os
 import datetime
 import pypdf
+
 from pydub import AudioSegment
 st.set_page_config(
     page_title="AudioKit",
-    page_icon="🎙️",  # Tu peux mettre un emoji ou le chemin vers un fichier .png
+    page_icon="https://raw.githubusercontent.com/nyssos2/audiokit_secure/main/logo.png️",  # Tu peux mettre un emoji ou le chemin vers un fichier .png
     layout="centered"
 )
 # --- CONFIGURATION DE L'ICÔNE MOBILE ---
@@ -134,7 +135,7 @@ with st.sidebar:
 sujet = st.text_input("Quel monument ou lieu voulez-vous visiter ?")
 
 # AJOUT : Interface pour le document source (facultatif)
-pdf_complement = st.file_uploader("Facultatif : ajouter un PDF (texte uniquement)", type=["pdf"])
+pdf_complement = st.file_uploader("Ajouter un document source (facultatif)", type=["pdf"])
 
 pdf_text = ""
 if pdf_complement is not None:
@@ -167,7 +168,7 @@ if st.button("✍️ Rédiger le script"):
             # CALCUL DU VOLUME DE TEXTE
             # 145 mots/min est une bonne moyenne pour une élocution posée
             mots_attendus = duree * 145
-
+            
             # Préparation du bloc de contexte PDF (si présent)
             contexte_pdf = ""
             if pdf_text:
@@ -177,7 +178,7 @@ if st.button("✍️ Rédiger le script"):
                 
                 CONSIGNE SPÉCIFIQUE : Utilise prioritairement les informations, les chiffres et les anecdotes présents dans ce document pour enrichir ton récit. Si le document contient des détails techniques ou historiques précis, intègre-les de manière fluide dans le style choisi.
                 """
-            
+                
             # Prompt enrichi avec contrainte explicite de longueur et contexte PDF
             prompt = f"""
             TU ES UN GUIDE TOURISTIQUE DONT LE STYLE EST : {personnalite}.
@@ -237,50 +238,66 @@ if st.session_state.script_final:
 
 # ÉTAPE 3 : AUDIO
 if st.session_state.script_final:
-    if st.button("🔊 Créer l'Audio final"):
+    if st.button("🔊 Créer l'audio final"):
         try:
             with st.status("Génération de l'expérience audio..."):
-                # 1. Définition des noms de fichiers
+                # 1. Nom du fichier enrichi avec le public
                 sujet_propre = "".join(x for x in sujet if x.isalnum() or x in "._- ").replace(" ", "_")
+                # On nettoie le nom du public pour éviter les caractères spéciaux (ex: parenthèses)
                 public_propre = "".join(x for x in public if x.isalnum())
-                nom_base = f"guide_{sujet_propre}_{public_propre}"
                 
-                nom_mp3 = f"{nom_base}_final.mp3"
-                temp_voix = "temp_voix.mp3"  # <--- DÉFINITION CLAIRE
-
-                # 2. GÉNÉRATION DE LA VOIX (Fichier temporaire)
+                nom_base = f"guide_{sujet_propre}_{public_propre}"
+                fichiers_existants = [f for f in os.listdir(".") if f.startswith(nom_base)]
+                index = len(fichiers_existants) + 1
+                nom_mp3 = f"{nom_base}_final_{index}.mp3"
+                # Création du fichier temporaire pour la voix seule
+                temp_voix = f"temp_voix_{index}.mp3"
+                
+                # 2. GÉNÉRATION DE LA VOIX
                 async def generate_voice():
                     voice = "fr-FR-DeniseNeural" if genre_voix == "Féminine" else "fr-FR-HenriNeural"
+                    # On ajoute un petit silence au début
                     texte_complet = " . . . " + st.session_state.script_final
-                    communicate = edge_tts.Communicate(texte_complet, voice)
-                    await communicate.save(temp_voix) # On enregistre d'abord la voix seule
+                    communicate = edge_tts.Communicate(st.session_state.script_final, voice)
+                    await communicate.save(temp_voix)
 
                 asyncio.run(generate_voice())
 
-                # 3. MIXAGE
+                # 3. MIXAGE AVEC L'AMBIANCE
                 if musique_fond and st.session_state.get('chemin_son_complet'):
                     try:
-                        # Chargement
+                        import time
+                        time.sleep(1.0)  # Petit dodo pour laisser Windows libérer le fichier
+                        
+                        # On charge la voix fraîchement créée
                         son_voix = AudioSegment.from_file(temp_voix)
+                        
+                        # On charge la musique d'ambiance choisie dans la sidebar
                         son_ambiance = AudioSegment.from_file(st.session_state.chemin_son_complet)
 
-                        # Mixage (-25dB pour l'ambiance)
+                        # Réglage du volume d'ambiance (-25dB)
                         son_ambiance_calme = son_ambiance - 25
-                        audio_mixe = son_voix.overlay(son_ambiance_calme, loop=True)
+
+                        # Superposition (overlay) de la voix sur l'ambiance en boucle
+                        audio_mixe = son_voix.overlay(son_ambiance_calme, loop=True)                        
                         
-                        # Export final
+                        # Exportation finale
                         audio_mixe.export(nom_mp3, format="mp3")
-                        
-                        # Nettoyage
+                       
+                        # Nettoyage du fichier temporaire
                         if os.path.exists(temp_voix):
                             os.remove(temp_voix)
+                        
                     except Exception as e_mix:
-                        st.warning(f"Mixage échoué : {e_mix}")
-                        os.rename(temp_voix, nom_mp3) # Backup : on garde au moins la voix
+                        st.warning(f"Le mixage a échoué (voix seule conservée).")
+                        # Si le mixage échoue, on renomme la voix temp en fichier final
+                        if os.path.exists(temp_voix):
+                            os.rename(temp_voix, nom_mp3)
+                        print(f"--- ERREUR MIXAGE : {e_mix}")
                 else:
-                    # Pas de musique : on renomme simplement la voix
-                    if os.path.exists(nom_mp3): os.remove(nom_mp3) # Sécurité
-                    os.rename(temp_voix, nom_mp3)
+                    # Pas de musique de fond, on renomme simplement
+                    if os.path.exists(temp_voix):
+                        os.rename(temp_voix, nom_mp3)
 
                 # 4. AJOUT DES MÉTADONNÉES GPS (Version robuste)
                 try:
@@ -352,8 +369,3 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
-
-
-
-
-
