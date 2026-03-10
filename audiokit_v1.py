@@ -240,66 +240,47 @@ if st.session_state.script_final:
     if st.button("🔊 Créer l'Audio final"):
         try:
             with st.status("Génération de l'expérience audio..."):
-                # 1. Nom du fichier enrichi avec le public
+                # 1. Définition des noms de fichiers
                 sujet_propre = "".join(x for x in sujet if x.isalnum() or x in "._- ").replace(" ", "_")
-                # On nettoie le nom du public pour éviter les caractères spéciaux (ex: parenthèses)
                 public_propre = "".join(x for x in public if x.isalnum())
-                
                 nom_base = f"guide_{sujet_propre}_{public_propre}"
-                fichiers_existants = [f for f in os.listdir(".") if f.startswith(nom_base)]
-                index = len(fichiers_existants) + 1
-                nom_mp3 = f"{nom_base}_final_{index}.mp3"
+                
+                nom_mp3 = f"{nom_base}_final.mp3"
+                temp_voix = "temp_voix.mp3"  # <--- DÉFINITION CLAIRE
 
-                # 2. GÉNÉRATION DE LA VOIX
+                # 2. GÉNÉRATION DE LA VOIX (Fichier temporaire)
                 async def generate_voice():
                     voice = "fr-FR-DeniseNeural" if genre_voix == "Féminine" else "fr-FR-HenriNeural"
-                    # On ajoute un petit silence au début
                     texte_complet = " . . . " + st.session_state.script_final
                     communicate = edge_tts.Communicate(texte_complet, voice)
-                    await communicate.save(nom_mp3)
+                    await communicate.save(temp_voix) # On enregistre d'abord la voix seule
 
                 asyncio.run(generate_voice())
 
-                # 3. MIXAGE AVEC L'AMBIANCE
+                # 3. MIXAGE
                 if musique_fond and st.session_state.get('chemin_son_complet'):
                     try:
-                        import time
-                        time.sleep(1.0)  # Petit dodo pour laisser Windows libérer le fichier
-                        
-                        # On charge les deux sources
+                        # Chargement
                         son_voix = AudioSegment.from_file(temp_voix)
                         son_ambiance = AudioSegment.from_file(st.session_state.chemin_son_complet)
 
-                        # Réglage du volume d'ambiance (-25dB)
+                        # Mixage (-25dB pour l'ambiance)
                         son_ambiance_calme = son_ambiance - 25
-
-                        # Superposition (overlay) de la voix sur l'ambiance en boucle
-                        audio_mixe = son_voix.overlay(son_ambiance_calme, loop=True)                        
+                        audio_mixe = son_voix.overlay(son_ambiance_calme, loop=True)
                         
-                        # Exportation finale
+                        # Export final
                         audio_mixe.export(nom_mp3, format="mp3")
-                       
-                        # Nettoyage du fichier temporaire
+                        
+                        # Nettoyage
                         if os.path.exists(temp_voix):
                             os.remove(temp_voix)
-                        
-                        # On remplace le fichier original par le mixé
-                        # On ferme les accès avant (certains systèmes le demandent)
-                        del son_voix
-                        del son_ambiance
-                        
-                        os.replace(temp_final, nom_mp3)
-                        
                     except Exception as e_mix:
-                        st.warning(f"Le mixage a échoué (voix seule conservée).")
-                        # Si le mixage échoue, on renomme la voix temp en fichier final
-                        if os.path.exists(temp_voix):
-                            os.rename(temp_voix, nom_mp3)
-                        print(f"--- ERREUR MIXAGE : {e_mix}")
+                        st.warning(f"Mixage échoué : {e_mix}")
+                        os.rename(temp_voix, nom_mp3) # Backup : on garde au moins la voix
                 else:
-                    # Pas de musique de fond, on renomme simplement
-                    if os.path.exists(temp_voix):
-                        os.rename(temp_voix, nom_mp3)
+                    # Pas de musique : on renomme simplement la voix
+                    if os.path.exists(nom_mp3): os.remove(nom_mp3) # Sécurité
+                    os.rename(temp_voix, nom_mp3)
 
                 # 4. AJOUT DES MÉTADONNÉES GPS (Version robuste)
                 try:
@@ -371,6 +352,7 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
 
 
 
