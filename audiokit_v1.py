@@ -9,6 +9,8 @@ import datetime
 import pypdf
 
 from pydub import AudioSegment
+AudioSegment.converter = "ffmpeg"
+AudioSegment.ffprobe = "ffprobe"
 st.set_page_config(
     page_title="AudioKit",
     page_icon="🎙️",  # Tu peux mettre un emoji ou le chemin vers un fichier .png
@@ -379,3 +381,4 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
+
