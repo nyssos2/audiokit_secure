@@ -168,7 +168,7 @@ if st.button("🗑️ Effacer et recommencer"):
     st.rerun()
 
 # ÉTAPE 1 : RÉDACTION
-if st.button("✍️ Rédiger le script"):
+if st.button("✍️ Etape 1/3 : Rédiger le script"):
     try:
         progress = st.progress(10, text="✍️ Rédaction du script en cours...")
         with st.status(f"Rédaction en mode {personnalite}..."):
@@ -236,7 +236,7 @@ if st.button("✍️ Rédiger le script"):
 
 # ÉTAPE 2 : ÉDITION (La boîte de dialogue toujours visible si un script existe)
 if st.session_state.script_final:
-    st.subheader("📝 Révision du script")
+    st.subheader("📝 Etape 2/3 : Révision du script")
     script_edite = st.text_area(
         "Vous pouvez corriger le texte avant de créer l'audio :", 
         value=st.session_state.script_final, 
@@ -247,7 +247,7 @@ if st.session_state.script_final:
 
 # ÉTAPE 3 : AUDIO
 if st.session_state.script_final:
-    if st.button("🔊 Créer l'audio final"):
+    if st.button("🔊 Etape 3/3 : Créer l'audio final"):
         try:
             with st.status("Génération de l'expérience audio..."):
                 # 1. Nom du fichier enrichi avec le public
