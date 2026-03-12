@@ -102,6 +102,7 @@ with st.sidebar:
     st.divider()
     st.subheader("🎵 Ambiance Sonore")
     musique_fond = st.checkbox("Ajouter une ambiance sonore", value=False)
+    st.session_state.musique_fond = musique_fond
 
     if musique_fond:
         categories_traduction = {
@@ -265,13 +266,10 @@ if st.session_state.script_final:
 
                 # 3. MIXAGE AVEC L'AMBIANCE
                 st.write(f"DEBUG — musique_fond={musique_fond} | chemin={st.session_state.get('chemin_son_complet')}") # Ligne temporaire de débogage
-                if musique_fond and st.session_state.get('chemin_son_complet'):
+                if st.session_state.get('musique_fond') and st.session_state.get('chemin_son_complet'):
                     try:
                         import time
                         time.sleep(1.0)  # Petit dodo pour laisser Windows libérer le fichier
-                        
-                        son_voix = AudioSegment.from_file(temp_voix).set_frame_rate(44100)
-                        son_ambiance = AudioSegment.from_file(chemin_son_choisi).set_frame_rate(44100)
                         
                         # On charge la voix fraîchement créée
                         son_voix = AudioSegment.from_file(temp_voix)
@@ -381,4 +379,3 @@ for f in fichiers:
             if confirm.button("Confirmer la suppression", key=f"del_{f}"):
                 os.remove(f)
                 st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
-
