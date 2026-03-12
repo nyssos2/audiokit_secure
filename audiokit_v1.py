@@ -5,15 +5,11 @@ import asyncio
 import edge_tts
 # (suppression de 'from gtts import gTTS')
 import os
-import datetime
 import pypdf
 
 from pydub import AudioSegment
 AudioSegment.converter = "ffmpeg"
 AudioSegment.ffprobe = "ffprobe"
-import subprocess #temporaire
-result = subprocess.run(['which', 'ffmpeg'], capture_output=True, text=True) #temporaire
-st.sidebar.write(f"FFmpeg path: {result.stdout}") #temporaire*
 
 st.set_page_config(
     page_title="AudioKit",
@@ -81,7 +77,7 @@ model = GenerativeModel(model_name=ID_MODEL)
 st.title("🎙️ Ma fabrique à audio-guides perso")
 st.markdown("##### Crée tes audio-guides immersifs et captivants !")
 # On utilise du HTML simple dans le markdown pour réduire la taille et griser le texte
-st.markdown(f"<p style='font-size: 0.8em; color: gray;'>Modèle propulsé par : Gemini 2.5 Flash</p>", unsafe_allow_html=True)
+st.markdown(f"<p style='font-size: 0.8em; color: gray;'>Modèle propulsé par Gemini 2.5 Flash</p>", unsafe_allow_html=True)
 
 # --- INTERFACE ---
 with st.sidebar:
@@ -167,10 +163,14 @@ if pdf_complement is not None:
 # On utilise le session_state pour se souvenir du script entre les clics
 if "script_final" not in st.session_state:
     st.session_state.script_final = ""
+if st.button("🗑️ Effacer et recommencer"):
+    st.session_state.script_final = ""
+    st.rerun()
 
 # ÉTAPE 1 : RÉDACTION
 if st.button("✍️ Rédiger le script"):
     try:
+        progress = st.progress(10, text="✍️ Rédaction du script en cours...")
         with st.status(f"Rédaction en mode {personnalite}..."):
             # CALCUL DU VOLUME DE TEXTE
             # 145 mots/min est une bonne moyenne pour une élocution posée
@@ -222,12 +222,14 @@ if st.button("✍️ Rédiger le script"):
                (Exemple : pour 5 min = 700 mots / pour 20 min = 2800 mots).
             """
             response = model.generate_content(prompt)
+            progress.progress(70, text="🗺️ Récupération des coordonnées GPS...")
             # On demande discrètement les coordonnées GPS à Gemini à côté
             gps_prompt = f"Donne moi uniquement les coordonnées GPS (latitude, longitude) de {sujet} sous le format 'lat, lon'. Rien d'autre, sans les inventer."
             gps_res = model.generate_content(gps_prompt)
             st.session_state.coords_gps = gps_res.text.strip()
             # Nettoyage de sécurité pour enlever les éventuels résidus de Markdown
             st.session_state.script_final = response.text.replace("**", "").replace("#", "")
+            progress.progress(100, text="✅ Script prêt !")
             st.success("Script rédigé !")
     except Exception as e:
         st.error(f"Erreur rédaction : {e}")
@@ -339,6 +341,7 @@ if st.session_state.script_final:
 
             # Affichage final
             st.success("🎉 Ton audio-guide immersif est prêt !")
+            st.info("💡 Pensez à télécharger votre audioguide, il ne sera pas conservé après fermeture de l'application.")
             st.audio(nom_mp3)
             
             with open(nom_mp3, "rb") as file:
@@ -346,44 +349,3 @@ if st.session_state.script_final:
 
         except Exception as e:
             st.error(f"Erreur globale : {e}")
-
-# --- HISTORIQUE AVANCÉ ---
-st.divider()
-st.subheader("📚 Bibliothèque de tes audio-guides")
-
-# Liste des fichiers MP3
-fichiers = [f for f in os.listdir(".") if f.endswith(".mp3")]
-fichiers.sort(reverse=True)
-
-if not fichiers:
-    st.write("Aucun guide dans la bibliothèque.")
-
-for f in fichiers:
-    # On crée un cadre pour chaque ligne d'audio
-    with st.container(border=True):
-        col1, col2, col3 = st.columns([3, 1, 1])
-        
-        with col1:
-            st.write(f"📖 **{f}**")
-            st.audio(f)
-            
-        with col2:
-            # Bouton de téléchargement
-            with open(f, "rb") as file:
-                st.download_button(
-                    label="📥", 
-                    data=file, 
-                    file_name=f, 
-                    key=f"dl_{f}",
-                    help="Télécharger ce guide"
-                )
-                
-        with col3:
-            # Bouton Supprimer avec confirmation via Popover
-            confirm = st.popover("🗑️", help="Supprimer ce fichier")
-            confirm.warning("Supprimer définitivement ?")
-            if confirm.button("Confirmer la suppression", key=f"del_{f}"):
-                os.remove(f)
-                st.rerun() # Relance l'app pour mettre à jour la liste immédiatement
-
-
