@@ -60,6 +60,9 @@ def push_to_audiomap(nom_mp3, slug, nom_affiche, script, coords_str, sujet, dure
         "Authorization": f"token {token}",
         "Accept": "application/vnd.github+json"
     }
+    # Extraction de lat et lon depuis la chaîne "lat, lon"
+    lat, lon = [x.strip() for x in coords_str.split(',')]
+    
     base_url = f"https://api.github.com/repos/{repo}/contents/audioguides/{slug}"
 
     # Nom de base du fichier (sans espaces ni accents)
