@@ -40,7 +40,11 @@ st.markdown(
 def coords_to_country_slug(coords_str):
     """Convertit 'lat, lon' en slug de pays ex: 'japon', 'france'"""
     try:
-        lat, lon = [x.strip() for x in coords_str.split(',')]
+        # Remplace : lat, lon = [x.strip() for x in coords_str.split(',')]
+        # Par cette version robuste :
+        parts = [p.strip() for p in coords_str.split(',')]
+        lat = parts[0] if len(parts) > 0 else "0"
+        lon = parts[1] if len(parts) > 1 else "0"
         url = f"https://nominatim.openstreetmap.org/reverse?lat={lat}&lon={lon}&format=json&accept-language=fr"
         r = requests.get(url, headers={"User-Agent": "AudioKit/1.0"}, timeout=5)
         country = r.json().get("address", {}).get("country", "inconnu")
@@ -60,9 +64,12 @@ def push_to_audiomap(nom_mp3, slug, nom_affiche, script, coords_str, sujet, dure
         "Authorization": f"token {token}",
         "Accept": "application/vnd.github+json"
     }
-    # Extraction de lat et lon depuis la chaîne "lat, lon"
-    lat, lon = [x.strip() for x in coords_str.split(',')]
-    
+    # Remplace : lat, lon = [x.strip() for x in coords_str.split(',')]
+    # Par cette version robuste :
+    parts = [p.strip() for p in coords_str.split(',')]
+    lat = parts[0] if len(parts) > 0 else "0"
+    lon = parts[1] if len(parts) > 1 else "0"
+
     base_url = f"https://api.github.com/repos/{repo}/contents/audioguides/{slug}"
 
     # Nom de base du fichier (sans espaces ni accents)
@@ -169,7 +176,11 @@ st.markdown(f"<p style='font-size: 0.8em; color: gray;'>Modèle propulsé par Ge
 # --- INTERFACE ---
 with st.sidebar:
     st.header("Paramètres")
-    public = st.selectbox("Public cible", ["Enfants (5-10 ans)", "Ados", "Adultes"])
+    public = st.selectbox(
+    "Public cible", 
+    ["Enfants (5-10 ans)", "Ados", "Adultes"], 
+    index=2
+    )
     duree = st.select_slider(
         "Durée souhaitée (minutes)", 
         options=[5, 10, 15, 20, 30], 
@@ -312,7 +323,7 @@ if st.button("✍️ Etape 1/3 : Rédiger le script"):
             response = model.generate_content(prompt)
             progress.progress(70, text="🗺️ Récupération des coordonnées GPS...")
             # On demande discrètement les coordonnées GPS à Gemini à côté
-            gps_prompt = f"Donne moi uniquement les coordonnées GPS (latitude, longitude) de {sujet} sous le format 'lat, lon'. Rien d'autre, sans les inventer."
+            gps_prompt = f"Donne moi uniquement les coordonnées GPS (latitude, longitude) de {sujet} ET le nom de la ville/région sous le format 'lat, lon, destination'. Exemple: '35.01, 135.67, Kyoto'. Rien d'autre, sans les inventer."
             gps_res = model.generate_content(gps_prompt)
             st.session_state.coords_gps = gps_res.text.strip()
             # Nettoyage de sécurité pour enlever les éventuels résidus de Markdown
