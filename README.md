@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="logo.png" alt="AudioKit Logo" width="120" />
+<img src="logo.png" alt="AudioKit Logo" width="100" />
 
 # 🎙️ AudioKit `v5.8+`
 
