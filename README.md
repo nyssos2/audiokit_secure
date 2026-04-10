@@ -2,7 +2,7 @@
 
 <img src="https://raw.githubusercontent.com/nyssos2/AudioKit/main/logo.png" alt="AudioKit Logo" width="120" />
 
-# 🎙️ AudioKit `v5.9+`
+# 🎙️ AudioKit `v6`
 
 **Transformez n'importe quel sujet en audio-guide immersif de qualité professionnelle.**
 
