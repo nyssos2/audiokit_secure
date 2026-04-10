@@ -2,7 +2,7 @@
 
 <img src="logo.png" alt="AudioKit Logo" width="100" />
 
-# 🎙️ AudioKit `v5.8+`
+# 🎙️ AudioKit `v5.9+`
 
 **Transformez n'importe quel sujet en audio-guide immersif de qualité professionnelle.**
 
